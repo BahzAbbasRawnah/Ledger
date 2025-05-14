@@ -55,6 +55,7 @@ class AppLocalizations {
   String get recentTransactions => _languages.recentTransactions;
   String get notProvided => _languages.notProvided;
   String get notSet => _languages.notSet;
+  String get noSearchResults => _languages.noSearchResults;
   String get createdAt => _languages.createdAt;
   String get updatedAt => _languages.updatedAt;
   String get calculating => _languages.calculating;
@@ -136,8 +137,8 @@ class AppLocalizations {
   String get editTransaction => _languages.editTransaction;
   String get transactionDetails => _languages.transactionDetails;
   String get transactionType => _languages.transactionType;
-  String get incoming => _languages.incoming;
-  String get outgoing => _languages.outgoing;
+  String get Credit => _languages.Credit;
+  String get Debit => _languages.Debit;
   String get amount => _languages.amount;
   String get date => _languages.date;
   String get notes => _languages.notes;
@@ -165,10 +166,13 @@ class AppLocalizations {
   String get allClients => _languages.allClients;
   String get exportAsPdf => _languages.exportAsPdf;
   String get exportAsExcel => _languages.exportAsExcel;
-  String get totalIncoming => _languages.totalIncoming;
-  String get totalOutgoing => _languages.totalOutgoing;
+  String get totalCredit => _languages.totalCredit;
+  String get totalDebit => _languages.totalDebit;
   String get balance => _languages.balance;
   String get noReportData => _languages.noReportData;
+  String get clientReport => _languages.clientReport;
+  String get transactionReport => _languages.transactionReport;
+  String get currencyReport => _languages.currencyReport;
 
   // Settings
   String get settings => _languages.settings;
@@ -192,7 +196,10 @@ class AppLocalizations {
   String get trialDaysLeft => _languages.trialDaysLeft;
   String get upgradeToPremium => _languages.upgradeToPremium;
   String get premiumFeatures => _languages.premiumFeatures;
-
+  String get selectCurrency => _languages.selectCurrency;
+  String get currencySelected => _languages.currencySelected;
+  String get notSelected => _languages.currencyNotSelected;
+  
   // Format date based on locale
   String formatDate(DateTime date) {
     return DateFormat.yMMMd(locale.languageCode).format(date);
@@ -210,16 +217,11 @@ class AppLocalizations {
     switch (code) {
       case 'USD':
         return '\$';
-      case 'EUR':
-        return '€';
-      case 'GBP':
-        return '£';
+      case 'YER':
+        return '﷼';
       case 'SAR':
         return '﷼';
-      case 'AED':
-        return 'د.إ';
-      case 'EGP':
-        return 'ج.م';
+    
       default:
         return '\$';
     }

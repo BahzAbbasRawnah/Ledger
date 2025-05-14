@@ -210,9 +210,9 @@ class LanguageAr extends Languages {
   @override
   String get transactionType => 'نوع المعاملة';
   @override
-  String get incoming => 'وارد';
+  String get Credit =>' دائن ( له)';
   @override
-  String get outgoing => 'صادر';
+  String get Debit => ' مدين ( عليه)';
   @override
   String get amount => 'المبلغ';
   @override
@@ -266,13 +266,22 @@ class LanguageAr extends Languages {
   @override
   String get exportAsExcel => 'تصدير كملف Excel';
   @override
-  String get totalIncoming => 'إجمالي الوارد';
+  String get totalCredit => ' إجمالي الدائن ( له)';
   @override
-  String get totalOutgoing => 'إجمالي الصادر';
+  String get totalDebit => 'إجمالي المدين ( عليه)';
   @override
   String get balance => 'الرصيد';
   @override
   String get noReportData => 'لا توجد بيانات للفترة المحددة';
+
+  @override
+  String get clientReport => 'تقرير العملاء';
+
+  @override
+  String get transactionReport => 'تقرير المعاملات';
+
+  @override
+  String get currencyReport => 'تقرير العملات';
 
   // Settings
   @override
@@ -317,4 +326,34 @@ class LanguageAr extends Languages {
   String get upgradeToPremium => 'الترقية إلى النسخة المميزة';
   @override
   String get premiumFeatures => 'ميزات النسخة المميزة';
+
+
+  //Errors
+  @override
+  String get noSearchResults => 'لا توجد نتائج للبحث';
+  @override
+  String get noClientsFound => 'لا يوجد عملاء';
+  @override
+  String get noTransactionsFound => 'لا توجد معاملات';
+  @override
+  String get noReportFound => 'لا يوجد تقرير';
+  @override
+  String get invalidCredentials => 'البيانات غير صالحة';
+  @override
+  String get somethingWentWrong => 'حدث خطأ ما';
+  @override
+  String get pleaseTryAgainLater => 'الرجاء المحاولة مرة أخرى لاحقاً';
+  @override
+  String get connectionError => 'خطأ في الاتصال';
+  @override
+  String get permissionDenied => 'تم رفض إذن';
+
+
+  // Currency
+  @override
+  String get selectCurrency => 'اختر العملة';
+  @override
+  String get currencySelected => 'تم اختيار العملة';
+  @override
+  String get currencyNotSelected => 'لم يتم اختيار العملة';
 }

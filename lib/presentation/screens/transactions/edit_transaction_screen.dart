@@ -158,13 +158,13 @@ class _EditTransactionScreenState extends State<EditTransactionScreen> {
                 SegmentedButton<String>(
                   segments: [
                     ButtonSegment<String>(
-                      value: AppConstants.transactionTypeIncoming,
-                      label: Text(localizations.incoming),
+                      value: AppConstants.transactionTypeCredit,
+                      label: Text(localizations.Credit),
                       icon: const Icon(Icons.arrow_downward),
                     ),
                     ButtonSegment<String>(
-                      value: AppConstants.transactionTypeOutgoing,
-                      label: Text(localizations.outgoing),
+                      value: AppConstants.transactionTypeDebit,
+                      label: Text(localizations.Debit),
                       icon: const Icon(Icons.arrow_upward),
                     ),
                   ],
@@ -356,6 +356,7 @@ class _EditTransactionScreenState extends State<EditTransactionScreen> {
                       text: localizations.save,
                       isLoading: state is TransactionLoadingState,
                       onPressed: _updateTransaction,
+                      widthPercentage: 70, // 70% of screen width
                     );
                   },
                 ),

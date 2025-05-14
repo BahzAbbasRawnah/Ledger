@@ -177,6 +177,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                           CustomButton(
                             text: localizations.addTransaction,
                             icon: Icons.add,
+                            widthPercentage: 70, // 70% of screen width
                             onPressed: () {
                               Navigator.of(context).push(
                                 MaterialPageRoute(
@@ -202,12 +203,12 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                         return ListTile(
                           leading: CircleAvatar(
                             backgroundColor: transaction.type ==
-                                    AppConstants.transactionTypeIncoming
+                                    AppConstants.transactionTypeCredit
                                 ? AppTheme.successColor
                                 : AppTheme.errorColor,
                             child: Icon(
                               transaction.type ==
-                                      AppConstants.transactionTypeIncoming
+                                      AppConstants.transactionTypeCredit
                                   ? Icons.arrow_downward
                                   : Icons.arrow_upward,
                               color: Colors.white,
@@ -220,7 +221,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: transaction.type ==
-                                          AppConstants.transactionTypeIncoming
+                                          AppConstants.transactionTypeCredit
                                       ? AppTheme.successColor
                                       : AppTheme.errorColor,
                                 ),

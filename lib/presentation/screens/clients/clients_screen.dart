@@ -3,12 +3,18 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/localization/app_localizations.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/data_utils.dart';
+import '../../../core/utils/ui_utils.dart';
+import '../../../data/models/client_model.dart';
 import '../../bloc/client/client_bloc.dart';
 import '../../bloc/client/client_event.dart';
 import '../../bloc/client/client_state.dart';
-import '../../widgets/custom_button.dart';
+import '../../utils/snackbar_utils.dart';
+import '../../widgets/custom_text_field.dart';
+import '../../widgets/empty_widget.dart';
 import 'add_client_screen.dart';
 import 'client_details_screen.dart';
+import 'client_item.dart';
 
 class ClientsScreen extends StatefulWidget {
   const ClientsScreen({super.key});
@@ -19,6 +25,8 @@ class ClientsScreen extends StatefulWidget {
 
 class _ClientsScreenState extends State<ClientsScreen> {
   final _searchController = TextEditingController();
+  // Sort order: true for ascending (oldest first), false for descending (newest first)
+  bool _sortAscending = false;
 
   @override
   void initState() {
@@ -33,15 +41,76 @@ class _ClientsScreenState extends State<ClientsScreen> {
   }
 
   void _loadClients() {
-    context.read<ClientBloc>().add(ClientLoadAllEvent());
+    // Use YER as the default currency
+    context
+        .read<ClientBloc>()
+        .add(const ClientLoadAllEvent(currencyCode: 'YER'));
   }
 
   void _searchClients(String query) {
     if (query.isEmpty) {
       _loadClients();
     } else {
-      context.read<ClientBloc>().add(ClientSearchEvent(query: query));
+      // Use YER as the default currency
+      context.read<ClientBloc>().add(
+            ClientSearchEvent(
+              query: query,
+              currencyCode: 'YER',
+            ),
+          );
     }
+  }
+
+  void _toggleSortOrder() {
+    setState(() {
+      _sortAscending = !_sortAscending;
+    });
+  }
+
+  // Sort clients by createdAt date using utility method
+  List<dynamic> _sortClients(List<dynamic> clients) {
+    return DataUtils.sortClientsByDate(
+      clients.cast<ClientModel>(),
+      ascending: _sortAscending,
+    );
+  }
+
+  void _showAddTransactionDialog(BuildContext context, String clientId) {
+    UiUtils.showAddTransactionBottomSheet(context, clientId);
+  }
+
+  void _showAddClientBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+          ),
+          child: DraggableScrollableSheet(
+            initialChildSize: 0.9, // 90% of screen height
+            minChildSize: 0.5, // Minimum 50% of screen height
+            maxChildSize: 0.95, // Maximum 95% of screen height
+            expand: false,
+            builder: (context, scrollController) {
+              return Container(
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                ),
+                child: SingleChildScrollView(
+                  controller: scrollController,
+                  // Use the AddClientBottomSheet from add_client_screen.dart
+                  child: const AddClientBottomSheet(),
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -52,25 +121,52 @@ class _ClientsScreenState extends State<ClientsScreen> {
       appBar: AppBar(
         title: Text(localizations.clients),
         actions: [
+          // Sort button with appropriate icon based on current sort order
+          IconButton(
+            icon: Icon(
+                _sortAscending ? Icons.arrow_upward : Icons.arrow_downward),
+            tooltip:
+                '${localizations.createdAt} (${_sortAscending ? "Oldest first" : "Newest first"})',
+            onPressed: _toggleSortOrder,
+          ),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _loadClients,
           ),
         ],
       ),
-      body: Column(
-        children: [
-          // Search bar
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: localizations.search,
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
+      body: BlocListener<ClientBloc, ClientState>(
+        listener: (context, state) {
+          if (state is ClientAddedState) {
+            SnackBarUtils.showSuccessSnackBar(
+              context,
+              message: localizations.clientAddedSuccess,
+            );
+          } else if (state is ClientUpdatedState) {
+            SnackBarUtils.showSuccessSnackBar(
+              context,
+              message: localizations.clientUpdatedSuccess,
+            );
+          } else if (state is ClientDeletedState) {
+            SnackBarUtils.showSuccessSnackBar(
+              context,
+              message: localizations.clientDeletedSuccess,
+            );
+          } else if (state is ClientErrorState) {
+            SnackBarUtils.showErrorSnackBar(
+              context,
+              message: state.message,
+            );
+          }
+        },
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: CustomTextField(
+                controller: _searchController,
+                labelText: localizations.search,
+                prefixIcon: Icons.search,
                 suffixIcon: IconButton(
                   icon: const Icon(Icons.clear),
                   onPressed: () {
@@ -78,144 +174,87 @@ class _ClientsScreenState extends State<ClientsScreen> {
                     _loadClients();
                   },
                 ),
+                onChanged: _searchClients,
               ),
-              onChanged: _searchClients,
             ),
-          ),
+            Expanded(
+              child: BlocBuilder<ClientBloc, ClientState>(
+                builder: (context, state) {
+                  if (state is ClientLoadingState) {
+                    return const Center(child: CircularProgressIndicator());
+                  } else if (state is ClientLoadedState) {
+                    // Apply sorting to the clients list
+                    final clients = _sortClients(state.clients);
 
-          // Clients list
-          Expanded(
-            child: BlocBuilder<ClientBloc, ClientState>(
-              builder: (context, state) {
-                if (state is ClientLoadingState) {
-                  return const Center(
-                    child: CircularProgressIndicator(),
-                  );
-                } else if (state is ClientLoadedState) {
-                  final clients = state.clients;
+                    if (clients.isEmpty) {
+                      // Check if this is a search with no results
+                      if (_searchController.text.isNotEmpty) {
+                        return EmptyWidget(
+                          message:
+                              '${localizations.noSearchResults} "${_searchController.text}"',
+                          icon: Icons.search_off,
+                          iconColor: Colors.grey.shade400,
+                          iconSize: 80,
+                        );
+                      }
 
-                  if (clients.isEmpty) {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(
-                            Icons.people_outline,
-                            size: 64,
-                            color: Colors.grey,
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            localizations.noClients,
-                            style: const TextStyle(
-                              fontSize: 18,
-                              color: Colors.grey,
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-                          CustomButton(
-                            text: localizations.addClient,
-                            icon: Icons.person_add,
-                            onPressed: () {
+                      // No clients at all
+                      return EmptyWidget(
+                        message: localizations.noClients,
+                        icon: Icons.emoji_emotions_outlined,
+                        iconColor: Colors.grey.shade400,
+                        iconSize: 80,
+                        actionText: localizations.addClient,
+                        onAction: () {
+                          _showAddClientBottomSheet(context);
+                        },
+                      );
+                    }
+
+                    return RefreshIndicator(
+                      onRefresh: () async => _loadClients(),
+                      child: ListView.builder(
+                        itemCount: clients.length,
+                        itemBuilder: (context, index) {
+                          final client = clients[index];
+
+                          return ClientItem(
+                            client: client,
+                            localizations: localizations,
+                            onTap: () {
                               Navigator.of(context).push(
                                 MaterialPageRoute(
-                                  builder: (_) => const AddClientScreen(),
-                                ),
+                                    builder: (_) => ClientDetailsScreen(
+                                        clientId: client.id)),
                               );
                             },
-                          ),
-                        ],
+                            onAddTransaction: () =>
+                                _showAddTransactionDialog(context, client.id),
+                          );
+                        },
                       ),
                     );
+                  } else if (state is ClientErrorState) {
+                    return EmptyWidget(
+                      message: state.message,
+                      icon: Icons.error_outline,
+                      iconColor: AppTheme.errorColor,
+                      iconSize: 80,
+                      actionText: localizations.retry,
+                      onAction: _loadClients,
+                    );
+                  } else {
+                    return const SizedBox.shrink();
                   }
-
-                  return RefreshIndicator(
-                    onRefresh: () async {
-                      _loadClients();
-                    },
-                    child: ListView.builder(
-                      itemCount: clients.length,
-                      itemBuilder: (context, index) {
-                        final client = clients[index];
-
-                        return ListTile(
-                          leading: CircleAvatar(
-                            backgroundColor: AppTheme.primaryColor,
-                            child: Text(
-                              client.name?.isNotEmpty == true
-                                  ? client.name![0].toUpperCase()
-                                  : client.phoneNumber[0],
-                              style: const TextStyle(
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                          title: Text(client.name ?? localizations.client),
-                          subtitle: Text(client.phoneNumber),
-                          trailing: client.financialCeiling > 0
-                              ? Text(
-                                  '${localizations.ceiling}: ${client.financialCeiling}',
-                                  style: const TextStyle(
-                                    color: AppTheme.warningColor,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                )
-                              : null,
-                          onTap: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => ClientDetailsScreen(
-                                  clientId: client.id,
-                                ),
-                              ),
-                            );
-                          },
-                        );
-                      },
-                    ),
-                  );
-                } else if (state is ClientErrorState) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(
-                          Icons.error_outline,
-                          size: 64,
-                          color: AppTheme.errorColor,
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          state.message,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            color: AppTheme.errorColor,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 24),
-                        CustomButton(
-                          text: localizations.retry,
-                          onPressed: _loadClients,
-                        ),
-                      ],
-                    ),
-                  );
-                } else {
-                  return const SizedBox.shrink();
-                }
-              },
+                },
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => const AddClientScreen(),
-            ),
-          );
+          _showAddClientBottomSheet(context);
         },
         child: const Icon(Icons.person_add),
       ),

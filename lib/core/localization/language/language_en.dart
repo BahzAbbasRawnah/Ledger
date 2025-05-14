@@ -211,9 +211,9 @@ class LanguageEn extends Languages {
   @override
   String get transactionType => 'Transaction Type';
   @override
-  String get incoming => 'Incoming';
+  String get Credit => 'Credit';
   @override
-  String get outgoing => 'Outgoing';
+  String get Debit => 'Debit';
   @override
   String get amount => 'Amount';
   @override
@@ -269,13 +269,22 @@ class LanguageEn extends Languages {
   @override
   String get exportAsExcel => 'Export as Excel';
   @override
-  String get totalIncoming => 'Total Incoming';
+  String get totalCredit => 'Total Credit';
   @override
-  String get totalOutgoing => 'Total Outgoing';
+  String get totalDebit => 'Total Debit';
   @override
   String get balance => 'Balance';
   @override
   String get noReportData => 'No data available for the selected period';
+
+  @override
+  String get clientReport => 'Client Report';
+
+  @override
+  String get transactionReport => 'Transaction Report';
+
+  @override
+  String get currencyReport => 'Currency Report';
 
   // Settings
   @override
@@ -320,4 +329,35 @@ class LanguageEn extends Languages {
   String get upgradeToPremium => 'Upgrade to Premium';
   @override
   String get premiumFeatures => 'Premium Features';
+
+
+
+
+  //Errors
+  @override
+  String get noSearchResults => 'No search results found';
+  @override
+  String get noClientsFound => 'No clients found for query: ';
+  @override
+  String get noTransactionsFound => 'No transactions found for query: ';
+  @override
+  String get noReportFound => 'No report found for query: ';
+  @override
+  String get invalidCredentials => 'Invalid credentials';
+  @override
+  String get somethingWentWrong => 'Something went wrong';
+  @override
+  String get pleaseTryAgainLater => 'Please try again later';
+  @override
+  String get connectionError => 'Connection error';
+  @override
+  String get permissionDenied => 'Permission denied';
+
+  // Currency
+  @override
+  String get selectCurrency => 'Select Currency';
+  @override
+  String get currencySelected => 'Currency selected';
+  @override
+  String get currencyNotSelected => 'Currency not selected';
 }

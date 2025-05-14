@@ -106,8 +106,8 @@ abstract class Languages {
   String get editTransaction;
   String get transactionDetails;
   String get transactionType;
-  String get incoming;
-  String get outgoing;
+  String get Credit;
+  String get Debit;
   String get amount;
   String get date;
   String get notes;
@@ -135,10 +135,13 @@ abstract class Languages {
   String get allClients;
   String get exportAsPdf;
   String get exportAsExcel;
-  String get totalIncoming;
-  String get totalOutgoing;
+  String get totalCredit;
+  String get totalDebit;
   String get balance;
   String get noReportData;
+  String get clientReport;
+  String get transactionReport;
+  String get currencyReport;
 
   // Settings
   String get settings;
@@ -162,4 +165,23 @@ abstract class Languages {
   String get trialDaysLeft;
   String get upgradeToPremium;
   String get premiumFeatures;
+
+  // Errors
+  String get noSearchResults;
+  String get noClientsFound;
+  String get noTransactionsFound;
+  String get noReportFound;
+  String get invalidCredentials;
+  String get somethingWentWrong;
+  String get pleaseTryAgainLater;
+  String get connectionError;
+  String get permissionDenied;
+
+
+
+  // Currency
+  String get selectCurrency;
+  String get currencySelected;
+  String get currencyNotSelected;
+  
 }

@@ -7,31 +7,31 @@ part 'transaction_model.g.dart';
 class TransactionModel extends Equatable {
   @HiveField(0)
   final String id;
-  
+
   @HiveField(1)
   final String clientId;
-  
+
   @HiveField(2)
-  final String type; // 'incoming' or 'outgoing'
-  
+  final String type; // 'Credit' or 'Debit'
+
   @HiveField(3)
   final double amount;
-  
+
   @HiveField(4)
   final DateTime date;
-  
+
   @HiveField(5)
   final String? notes;
-  
+
   @HiveField(6)
   final String? receiptImagePath;
-  
+
   @HiveField(7)
   final String currency;
-  
+
   @HiveField(8)
   final DateTime createdAt;
-  
+
   @HiveField(9)
   final DateTime updatedAt;
 
@@ -98,7 +98,7 @@ class TransactionModel extends Equatable {
       date: DateTime.parse(json['date']),
       notes: json['notes'],
       receiptImagePath: json['receiptImagePath'],
-      currency: json['currency'] ?? 'USD',
+      currency: json['currency'] ?? 'YER',
       createdAt: DateTime.parse(json['createdAt']),
       updatedAt: DateTime.parse(json['updatedAt']),
     );
@@ -106,15 +106,15 @@ class TransactionModel extends Equatable {
 
   @override
   List<Object?> get props => [
-    id, 
-    clientId, 
-    type, 
-    amount, 
-    date, 
-    notes, 
-    receiptImagePath, 
-    currency, 
-    createdAt, 
-    updatedAt
-  ];
+        id,
+        clientId,
+        type,
+        amount,
+        date,
+        notes,
+        receiptImagePath,
+        currency,
+        createdAt,
+        updatedAt
+      ];
 }

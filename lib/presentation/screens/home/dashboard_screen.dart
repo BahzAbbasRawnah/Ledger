@@ -342,11 +342,11 @@ class DashboardScreen extends StatelessWidget {
 
               return ListTile(
                 leading: CircleAvatar(
-                  backgroundColor: transaction.type == 'incoming'
+                  backgroundColor: transaction.type == 'Credit'
                       ? AppTheme.successColor
                       : AppTheme.errorColor,
                   child: Icon(
-                    transaction.type == 'incoming'
+                    transaction.type == 'Credit'
                         ? Icons.arrow_downward
                         : Icons.arrow_upward,
                     color: Colors.white,
@@ -355,7 +355,7 @@ class DashboardScreen extends StatelessWidget {
                 title: Text(
                   '${transaction.currency} ${transaction.amount.toStringAsFixed(2)}',
                   style: TextStyle(
-                    color: transaction.type == 'incoming'
+                    color: transaction.type == 'Credit'
                         ? AppTheme.successColor
                         : AppTheme.errorColor,
                     fontWeight: FontWeight.bold,

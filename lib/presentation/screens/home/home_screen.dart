@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:ledger/presentation/screens/reports/reports_screen.dart';
 
 import '../../../core/localization/app_localizations.dart';
 import '../../bloc/auth/auth_bloc.dart';
@@ -9,7 +10,7 @@ import '../../bloc/client/client_event.dart';
 import '../../bloc/transaction/transaction_bloc.dart';
 import '../../bloc/transaction/transaction_event.dart';
 import '../clients/clients_screen.dart';
-import '../reports/reports_screen.dart';
+import '../reports/report_body.dart';
 import '../settings/settings_screen.dart';
 import '../transactions/transactions_screen.dart';
 import 'dashboard_screen.dart';

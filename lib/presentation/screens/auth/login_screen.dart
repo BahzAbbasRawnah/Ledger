@@ -157,6 +157,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           text: localizations.login,
                           isLoading: state is AuthLoadingState,
                           onPressed: _login,
+                          widthPercentage: 70, // 70% of screen width
                         );
                       },
                     ),

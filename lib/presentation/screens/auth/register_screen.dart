@@ -96,6 +96,38 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                             // App logo
+                    Center(
+                      child: Container(
+                        width: 100,
+                        height: 100,
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryColor,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Center(
+                          child: Icon(
+                            Icons.account_balance_wallet,
+                            size: 60,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // App name
+                    Center(
+                      child: Text(
+                        localizations.appName,
+                        style: const TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 48),
+
                     // Phone number field
                     CustomTextField(
                       controller: _phoneController,
@@ -171,6 +203,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           text: localizations.register,
                           isLoading: state is AuthLoadingState,
                           onPressed: _register,
+                          widthPercentage: 70, // 70% of screen width
                         );
                       },
                     ),

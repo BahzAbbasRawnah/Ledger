@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/localization/app_localizations.dart';
-import '../../../core/theme/app_theme.dart';
 import '../../bloc/auth/auth_bloc.dart';
 import '../../bloc/auth/auth_event.dart';
 import '../../bloc/auth/auth_state.dart';
+import '../../utils/snackbar_utils.dart';
 import '../../widgets/custom_button.dart';
 import '../home/home_screen.dart';
 
@@ -44,6 +44,7 @@ class _VerifyPhoneScreenState extends State<VerifyPhoneScreen> {
 
   void _verifyCode() {
     final code = _controllers.map((c) => c.text).join();
+    print('Attempting to verify code: $code for phone: ${widget.phoneNumber}');
 
     if (code.length == 6) {
       context.read<AuthBloc>().add(
@@ -52,17 +53,21 @@ class _VerifyPhoneScreenState extends State<VerifyPhoneScreen> {
               verificationCode: code,
             ),
           );
+    } else {
+      print('Code length is not 6: ${code.length}');
+      SnackBarUtils.showErrorSnackBar(
+        context,
+        message: 'Please enter all 6 digits of the verification code',
+      );
     }
   }
 
   void _resendCode() {
     // In a real app, we would resend the verification code
     // For this simulation, we'll just show a message
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(AppLocalizations.of(context).verificationCodeSent),
-        backgroundColor: AppTheme.successColor,
-      ),
+    SnackBarUtils.showSuccessSnackBar(
+      context,
+      message: AppLocalizations.of(context).verificationCodeSent,
     );
   }
 
@@ -76,20 +81,27 @@ class _VerifyPhoneScreenState extends State<VerifyPhoneScreen> {
       ),
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
+          print('Current auth state: $state');
+
           if (state is AuthRegistrationSuccessState) {
+            print('Registration successful');
+            // Don't navigate here, wait for AuthAuthenticatedState
+          } else if (state is AuthAuthenticatedState) {
+            print('Authentication successful, navigating to home screen');
             // Navigate to home screen
             Navigator.of(context).pushAndRemoveUntil(
               MaterialPageRoute(builder: (_) => const HomeScreen()),
               (route) => false,
             );
           } else if (state is AuthErrorState) {
+            print('Auth error: ${state.message}');
             // Show error message
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: AppTheme.errorColor,
-              ),
+            SnackBarUtils.showErrorSnackBar(
+              context,
+              message: state.message,
             );
+          } else if (state is AuthLoadingState) {
+            print('Auth loading state');
           }
         },
         child: SafeArea(
@@ -160,6 +172,7 @@ class _VerifyPhoneScreenState extends State<VerifyPhoneScreen> {
                       text: localizations.verifyPhone,
                       isLoading: state is AuthLoadingState,
                       onPressed: _verifyCode,
+                      widthPercentage: 70, // 70% of screen width
                     );
                   },
                 ),

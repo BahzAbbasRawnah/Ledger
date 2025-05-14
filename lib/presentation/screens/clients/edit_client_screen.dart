@@ -187,6 +187,7 @@ class _EditClientScreenState extends State<EditClientScreen> {
                       text: localizations.save,
                       isLoading: state is ClientLoadingState,
                       onPressed: _updateClient,
+                      widthPercentage: 70, // 70% of screen width
                     );
                   },
                 ),

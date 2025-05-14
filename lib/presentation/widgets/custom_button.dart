@@ -8,23 +8,31 @@ class CustomButton extends StatelessWidget {
   final bool isOutlined;
   final Color? color;
   final IconData? icon;
+  final double? widthPercentage; // Width as percentage of screen width
 
   const CustomButton({
-    Key? key,
+    super.key,
     required this.text,
     required this.onPressed,
     this.isLoading = false,
     this.isOutlined = false,
     this.color,
     this.icon,
-  }) : super(key: key);
+    this.widthPercentage, // Default is null (full width)
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+    final screenWidth = MediaQuery.of(context).size.width;
+
+    // Calculate button width based on percentage if provided
+    final buttonWidth =
+        widthPercentage != null ? screenWidth * (widthPercentage! / 100) : null;
+
+    Widget button;
     if (isOutlined) {
-      return OutlinedButton(
+      button = OutlinedButton(
         onPressed: isLoading ? null : onPressed,
         style: OutlinedButton.styleFrom(
           foregroundColor: color ?? theme.primaryColor,
@@ -37,7 +45,7 @@ class CustomButton extends StatelessWidget {
         child: _buildButtonContent(),
       );
     } else {
-      return ElevatedButton(
+      button = ElevatedButton(
         onPressed: isLoading ? null : onPressed,
         style: ElevatedButton.styleFrom(
           backgroundColor: color ?? theme.primaryColor,
@@ -50,6 +58,18 @@ class CustomButton extends StatelessWidget {
         child: _buildButtonContent(),
       );
     }
+
+    // Wrap with SizedBox if width percentage is provided
+    if (buttonWidth != null) {
+      return Center(
+        child: SizedBox(
+          width: buttonWidth,
+          child: button,
+        ),
+      );
+    }
+
+    return button;
   }
 
   Widget _buildButtonContent() {

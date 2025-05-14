@@ -24,9 +24,10 @@ class ClientBloc extends Bloc<ClientEvent, ClientState> {
     Emitter<ClientState> emit,
   ) async {
     emit(ClientLoadingState());
-    
+
     try {
-      final clients = clientRepository.getAllClients();
+      final clients =
+          clientRepository.getAllClients(currencyCode: event.currencyCode);
       emit(ClientLoadedState(clients: clients));
     } catch (e) {
       emit(ClientErrorState(message: e.toString()));
@@ -38,9 +39,12 @@ class ClientBloc extends Bloc<ClientEvent, ClientState> {
     Emitter<ClientState> emit,
   ) async {
     emit(ClientLoadingState());
-    
+
     try {
-      final clients = clientRepository.searchClients(event.query);
+      final clients = clientRepository.searchClients(
+        event.query,
+        currencyCode: event.currencyCode,
+      );
       emit(ClientLoadedState(clients: clients));
     } catch (e) {
       emit(ClientErrorState(message: e.toString()));
@@ -52,27 +56,28 @@ class ClientBloc extends Bloc<ClientEvent, ClientState> {
     Emitter<ClientState> emit,
   ) async {
     emit(ClientLoadingState());
-    
+
     try {
       // Validate phone number (simple validation)
       if (event.phoneNumber.isEmpty || event.phoneNumber.length < 10) {
         emit(const ClientErrorState(message: 'Invalid phone number'));
         return;
       }
-      
+
       // Validate password
       if (event.password.isEmpty || event.password.length < 6) {
-        emit(const ClientErrorState(message: 'Password must be at least 6 characters'));
+        emit(const ClientErrorState(
+            message: 'Password must be at least 6 characters'));
         return;
       }
-      
+
       final client = await clientRepository.addClient(
         name: event.name,
         phoneNumber: event.phoneNumber,
         password: event.password,
         financialCeiling: event.financialCeiling,
       );
-      
+
       emit(ClientAddedState(client: client));
     } catch (e) {
       emit(ClientErrorState(message: e.toString()));
@@ -84,7 +89,7 @@ class ClientBloc extends Bloc<ClientEvent, ClientState> {
     Emitter<ClientState> emit,
   ) async {
     emit(ClientLoadingState());
-    
+
     try {
       final updatedClient = await clientRepository.updateClient(event.client);
       emit(ClientUpdatedState(client: updatedClient));
@@ -98,7 +103,7 @@ class ClientBloc extends Bloc<ClientEvent, ClientState> {
     Emitter<ClientState> emit,
   ) async {
     emit(ClientLoadingState());
-    
+
     try {
       await clientRepository.deleteClient(event.id);
       emit(ClientDeletedState(id: event.id));
@@ -112,10 +117,13 @@ class ClientBloc extends Bloc<ClientEvent, ClientState> {
     Emitter<ClientState> emit,
   ) async {
     emit(ClientLoadingState());
-    
+
     try {
-      final client = clientRepository.getClientById(event.id);
-      
+      final client = clientRepository.getClientById(
+        event.id,
+        currencyCode: event.currencyCode,
+      );
+
       if (client != null) {
         emit(ClientDetailsLoadedState(client: client));
       } else {
@@ -131,13 +139,13 @@ class ClientBloc extends Bloc<ClientEvent, ClientState> {
     Emitter<ClientState> emit,
   ) async {
     emit(ClientLoadingState());
-    
+
     try {
       final client = clientRepository.verifyClientCredentials(
         event.phoneNumber,
         event.password,
       );
-      
+
       if (client != null) {
         emit(ClientVerifiedState(client: client));
       } else {

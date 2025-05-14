@@ -1,14 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:intl/intl.dart';
+import 'package:ledger/core/constants/app_constants.dart';
+import 'package:ledger/core/localization/app_localizations.dart';
+import 'package:ledger/core/utils/data_utils.dart';
+import 'package:ledger/data/models/client_model.dart';
+import 'package:ledger/data/models/transaction_model.dart';
+import 'package:ledger/presentation/bloc/client/client_bloc.dart';
+import 'package:ledger/presentation/bloc/client/client_event.dart';
+import 'package:ledger/presentation/bloc/client/client_state.dart';
+import 'package:ledger/presentation/bloc/transaction/transaction_bloc.dart';
+import 'package:ledger/presentation/screens/reports/report_preview.dart';
+import 'package:ledger/presentation/utils/snackbar_utils.dart';
+import 'package:ledger/presentation/widgets/custom_button.dart';
 
-import '../../../core/localization/app_localizations.dart';
-import '../../../core/theme/app_theme.dart';
-import '../../bloc/transaction/transaction_bloc.dart';
-import '../../bloc/transaction/transaction_event.dart';
-import '../../bloc/transaction/transaction_state.dart';
-import '../../widgets/custom_button.dart';
-
+/// Main screen for generating different types of reports
 class ReportsScreen extends StatefulWidget {
   const ReportsScreen({super.key});
 
@@ -17,467 +22,653 @@ class ReportsScreen extends StatefulWidget {
 }
 
 class _ReportsScreenState extends State<ReportsScreen> {
-  String _reportType = 'monthly'; // 'monthly', 'custom', 'detailed'
+  // Selected report type
+  String _selectedReportType = 'client';
+
+  // Date range for reports
   DateTime? _startDate;
   DateTime? _endDate;
+
+  // Selected client ID (if applicable)
   String? _selectedClientId;
-  String _selectedCurrency = 'USD';
+
+  // Selected currency (if applicable)
+  String _selectedCurrency = 'YER';
+
+  // List of clients
+  List<ClientModel> _clients = [];
 
   @override
   void initState() {
     super.initState();
-
-    // Set default dates for monthly report (current month)
-    final now = DateTime.now();
-    _startDate = DateTime(now.year, now.month, 1);
-    _endDate = DateTime(now.year, now.month + 1, 0); // Last day of month
+    _loadClients();
   }
 
-  void _generateReport() {
-    if (_reportType == 'monthly') {
-      final now = DateTime.now();
-
-      context.read<TransactionBloc>().add(
-            TransactionGenerateMonthlyReportEvent(
-              year: now.year,
-              month: now.month,
-              clientId: _selectedClientId,
-              currencyCode: _selectedCurrency,
-            ),
-          );
-    } else if (_reportType == 'custom' || _reportType == 'detailed') {
-      if (_startDate != null && _endDate != null) {
-        context.read<TransactionBloc>().add(
-              TransactionGenerateCustomReportEvent(
-                startDate: _startDate!,
-                endDate: _endDate!,
-                clientId: _selectedClientId,
-                currencyCode: _selectedCurrency,
-              ),
-            );
-      }
-    }
-  }
-
-  void _exportAsPdf() {
-    // In a real app, we would generate and export a PDF
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(AppLocalizations.of(context).exportAsPdf),
-        backgroundColor: AppTheme.successColor,
-      ),
-    );
-  }
-
-  void _exportAsExcel() {
-    // In a real app, we would generate and export an Excel file
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(AppLocalizations.of(context).exportAsExcel),
-        backgroundColor: AppTheme.successColor,
-      ),
-    );
+  void _loadClients() {
+    // Load clients using BLoC
+    context.read<ClientBloc>().add(const ClientLoadAllEvent());
   }
 
   @override
   Widget build(BuildContext context) {
-    final localizations = AppLocalizations.of(context);
+    final localization = AppLocalizations.of(context);
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(localizations.reports),
+        title: Text(localization.reports),
+        centerTitle: true,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Report type selection
+            // Report Type Selection
             Text(
-              localizations.reportType,
+              localization.reportType,
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 8),
-            SegmentedButton<String>(
-              segments: [
-                ButtonSegment<String>(
-                  value: 'monthly',
-                  label: Text(localizations.monthly),
-                  icon: const Icon(Icons.calendar_month),
-                ),
-                ButtonSegment<String>(
-                  value: 'custom',
-                  label: Text(localizations.custom),
-                  icon: const Icon(Icons.date_range),
-                ),
-                ButtonSegment<String>(
-                  value: 'detailed',
-                  label: Text(localizations.detailed),
-                  icon: const Icon(Icons.receipt_long),
-                ),
-              ],
-              selected: {_reportType},
-              onSelectionChanged: (Set<String> selection) {
-                setState(() {
-                  _reportType = selection.first;
-                });
-              },
-            ),
+            _buildReportTypeSelector(context),
             const SizedBox(height: 24),
 
-            // Date range selection (for custom and detailed reports)
-            if (_reportType == 'custom' || _reportType == 'detailed')
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    localizations.dateRange,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: InkWell(
-                          onTap: () async {
-                            final date = await showDatePicker(
-                              context: context,
-                              initialDate: _startDate ?? DateTime.now(),
-                              firstDate: DateTime(2000),
-                              lastDate: DateTime(2100),
-                            );
-
-                            if (date != null) {
-                              setState(() {
-                                _startDate = date;
-                              });
-                            }
-                          },
-                          child: InputDecorator(
-                            decoration: InputDecoration(
-                              labelText: localizations.startDate,
-                              border: const OutlineInputBorder(),
-                              suffixIcon: const Icon(Icons.calendar_today),
-                            ),
-                            child: Text(
-                              _startDate != null
-                                  ? DateFormat.yMd().format(_startDate!)
-                                  : '',
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: InkWell(
-                          onTap: () async {
-                            final date = await showDatePicker(
-                              context: context,
-                              initialDate: _endDate ?? DateTime.now(),
-                              firstDate: DateTime(2000),
-                              lastDate: DateTime(2100),
-                            );
-
-                            if (date != null) {
-                              setState(() {
-                                _endDate = date;
-                              });
-                            }
-                          },
-                          child: InputDecorator(
-                            decoration: InputDecoration(
-                              labelText: localizations.endDate,
-                              border: const OutlineInputBorder(),
-                              suffixIcon: const Icon(Icons.calendar_today),
-                            ),
-                            child: Text(
-                              _endDate != null
-                                  ? DateFormat.yMd().format(_endDate!)
-                                  : '',
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+            // Date Range Selection
+            Text(
+              localization.dateRange,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
               ),
-            const SizedBox(height: 16),
-
-            // Client selection
-            if (_reportType == 'detailed')
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    localizations.selectClient,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  // In a real app, we would show a dropdown with clients
-                  // For now, we'll just use a placeholder
-                  DropdownButtonFormField<String>(
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                    ),
-                    value: _selectedClientId,
-                    items: [
-                      DropdownMenuItem<String>(
-                        value: null,
-                        child: Text(localizations.allClients),
-                      ),
-                      const DropdownMenuItem<String>(
-                        value: 'client1',
-                        child: Text('Client 1'),
-                      ),
-                      const DropdownMenuItem<String>(
-                        value: 'client2',
-                        child: Text('Client 2'),
-                      ),
-                    ],
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedClientId = value;
-                      });
-                    },
-                  ),
-                ],
-              ),
-            const SizedBox(height: 16),
-
-            // Currency selection
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  localizations.currency,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                DropdownButtonFormField<String>(
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                  ),
-                  value: _selectedCurrency,
-                  items: const [
-                    DropdownMenuItem<String>(
-                      value: 'USD',
-                      child: Text('USD (\$)'),
-                    ),
-                    DropdownMenuItem<String>(
-                      value: 'EUR',
-                      child: Text('EUR (€)'),
-                    ),
-                    DropdownMenuItem<String>(
-                      value: 'GBP',
-                      child: Text('GBP (£)'),
-                    ),
-                    DropdownMenuItem<String>(
-                      value: 'SAR',
-                      child: Text('SAR (﷼)'),
-                    ),
-                  ],
-                  onChanged: (value) {
-                    if (value != null) {
-                      setState(() {
-                        _selectedCurrency = value;
-                      });
-                    }
-                  },
-                ),
-              ],
             ),
+            const SizedBox(height: 8),
+            _buildDateRangeSelector(context),
             const SizedBox(height: 24),
 
-            // Generate report button
-            CustomButton(
-              text: localizations.generateReport,
-              icon: Icons.bar_chart,
-              onPressed: _generateReport,
-            ),
-            const SizedBox(height: 24),
+            // Additional Filters (based on report type)
+            if (_selectedReportType == 'client') _buildClientSelector(context),
 
-            // Report results
-            Expanded(
-              child: BlocBuilder<TransactionBloc, TransactionState>(
-                builder: (context, state) {
-                  if (state is TransactionLoadingState) {
-                    return const Center(
-                      child: CircularProgressIndicator(),
-                    );
-                  } else if (state is TransactionReportGeneratedState) {
-                    final reportData = state.reportData;
-                    final transactions = reportData['transactions'] as List;
-                    final totalIncoming = reportData['totalIncoming'] as double;
-                    final totalOutgoing = reportData['totalOutgoing'] as double;
-                    final balance = reportData['balance'] as double;
+            if (_selectedReportType != 'SingleTransaction')
+              _buildCurrencySelector(context),
 
-                    if (transactions.isEmpty) {
-                      return Center(
-                        child: Text(localizations.noReportData),
-                      );
-                    }
+            const SizedBox(height: 32),
 
-                    return Column(
-                      children: [
-                        // Summary cards
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Card(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(16),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        localizations.totalIncoming,
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                          color: Colors.grey,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        '$_selectedCurrency ${totalIncoming.toStringAsFixed(2)}',
-                                        style: const TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                          color: AppTheme.successColor,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                            Expanded(
-                              child: Card(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(16),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        localizations.totalOutgoing,
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                          color: Colors.grey,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        '$_selectedCurrency ${totalOutgoing.toStringAsFixed(2)}',
-                                        style: const TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                          color: AppTheme.errorColor,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Card(
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Row(
-                              children: [
-                                Text(
-                                  localizations.balance,
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const Spacer(),
-                                Text(
-                                  '$_selectedCurrency ${balance.toStringAsFixed(2)}',
-                                  style: TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                    color: balance >= 0
-                                        ? AppTheme.successColor
-                                        : AppTheme.errorColor,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Export buttons
-                        Row(
-                          children: [
-                            Expanded(
-                              child: CustomButton(
-                                text: localizations.exportAsPdf,
-                                icon: Icons.picture_as_pdf,
-                                isOutlined: true,
-                                onPressed: _exportAsPdf,
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: CustomButton(
-                                text: localizations.exportAsExcel,
-                                icon: Icons.table_chart,
-                                isOutlined: true,
-                                onPressed: _exportAsExcel,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    );
-                  } else {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(
-                            Icons.bar_chart,
-                            size: 64,
-                            color: Colors.grey,
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'Generate a report to see results',
-                            style: const TextStyle(
-                              fontSize: 16,
-                              color: Colors.grey,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-                },
+            // Generate Report Button
+            Center(
+              child: CustomButton(
+                text: localization.generateReport,
+                onPressed: () => _generateReport(context),
+                widthPercentage: 70, // 70% of screen width
               ),
             ),
           ],
         ),
       ),
     );
+  }
+
+  // Build report type selector
+  Widget _buildReportTypeSelector(BuildContext context) {
+    final localization = AppLocalizations.of(context);
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Column(
+          children: [
+             RadioListTile<String>(
+              title: Text(localization.clientReport),
+              value: 'AllClients',
+              groupValue: _selectedReportType,
+              onChanged: (value) {
+                setState(() {
+                  _selectedReportType = value!;
+                });
+              },
+            ),
+            RadioListTile<String>(
+              title: Text(localization.clientReport),
+              value: 'client',
+              groupValue: _selectedReportType,
+              onChanged: (value) {
+                setState(() {
+                  _selectedReportType = value!;
+                });
+              },
+            ),
+            RadioListTile<String>(
+              title: Text(localization.transactionReport),
+              value: 'SingleTransaction',
+              groupValue: _selectedReportType,
+              onChanged: (value) {
+                setState(() {
+                  _selectedReportType = value!;
+                });
+              },
+            ),
+            RadioListTile<String>(
+              title: Text(localization.currencyReport),
+              value: 'SingleCurrency',
+              groupValue: _selectedReportType,
+              onChanged: (value) {
+                setState(() {
+                  _selectedReportType = value!;
+                });
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Build date range selector
+  Widget _buildDateRangeSelector(BuildContext context) {
+    final localization = AppLocalizations.of(context);
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: ListTile(
+                    title: Text(localization.startDate),
+                    subtitle: Text(_startDate != null
+                        ? _formatDate(_startDate!)
+                        : localization.notSelected),
+                    trailing: const Icon(Icons.calendar_today),
+                    onTap: () => _selectDate(context, true),
+                  ),
+                ),
+                Expanded(
+                  child: ListTile(
+                    title: Text(localization.endDate),
+                    subtitle: Text(_endDate != null
+                        ? _formatDate(_endDate!)
+                        : localization.notSelected),
+                    trailing: const Icon(Icons.calendar_today),
+                    onTap: () => _selectDate(context, false),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Build client selector
+  Widget _buildClientSelector(BuildContext context) {
+    final localization = AppLocalizations.of(context);
+
+    return BlocBuilder<ClientBloc, ClientState>(
+      builder: (context, state) {
+        if (state is ClientLoadingState) {
+          return const Center(child: CircularProgressIndicator());
+        } else if (state is ClientLoadedState) {
+          _clients = state.clients;
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                localization.selectClient,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: DropdownButtonFormField<String>(
+                    decoration: InputDecoration(
+                      labelText: localization.client,
+                      border: const OutlineInputBorder(),
+                    ),
+                    value: _selectedClientId,
+                    items: _clients.map((client) {
+                      return DropdownMenuItem<String>(
+                        value: client.id,
+                        child: Text(client.name ?? client.phoneNumber),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedClientId = value;
+                      });
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
+          );
+        } else if (state is ClientErrorState) {
+          return Center(
+            child: Text('Error: ${state.message}'),
+          );
+        } else {
+          return const Center(
+            child: Text('No clients available'),
+          );
+        }
+      },
+    );
+  }
+
+  // Build currency selector
+  Widget _buildCurrencySelector(BuildContext context) {
+    final localization = AppLocalizations.of(context);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          localization.selectCurrency,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: DropdownButtonFormField<String>(
+              decoration: InputDecoration(
+                labelText: localization.currency,
+                border: const OutlineInputBorder(),
+              ),
+              value: _selectedCurrency,
+              items: AppConstants.supportedCurrencies.map((currency) {
+                return DropdownMenuItem<String>(
+                  value: currency['code'] as String,
+                  child: Text(
+                      '${currency['code']} (${currency['symbol']}) - ${currency['name']}'),
+                );
+              }).toList(),
+              onChanged: (value) {
+                setState(() {
+                  _selectedCurrency = value!;
+                });
+              },
+            ),
+          ),
+        ),
+        const SizedBox(height: 24),
+      ],
+    );
+  }
+
+  // Format date for display
+  String _formatDate(DateTime date) {
+    return '${date.day}/${date.month}/${date.year}';
+  }
+
+  // Select date from date picker
+  Future<void> _selectDate(BuildContext context, bool isStartDate) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2030),
+    );
+
+    if (picked != null) {
+      setState(() {
+        if (isStartDate) {
+          _startDate = picked;
+        } else {
+          _endDate = picked;
+        }
+      });
+    }
+  }
+
+  // Generate report based on selected options
+  void _generateReport(BuildContext context) {
+    final localization = AppLocalizations.of(context);
+
+    try {
+      // Get repositories from BLoC
+      final clientRepository = context.read<ClientBloc>().clientRepository;
+      final transactionRepository =
+          context.read<TransactionBloc>().transactionRepository;
+
+      // Prepare report data based on selected type
+      String reportTitle;
+      List<String> tableHeaders;
+      List<String> tableFooterData=[];
+      List<List<String>> tableData = [];
+
+      switch (_selectedReportType) {
+        case 'AllClients':
+          // Get all clients with financial data for the selected currency
+          final clients = DataUtils.getAllClientsWithFinancialData(
+            clientRepository,
+            transactionRepository,
+            currencyCode: _selectedCurrency,
+          );
+
+          // Set report title and table headers
+          reportTitle = localization.allClients;
+          tableHeaders = [
+            localization.client,
+            localization.totalCredit,
+            localization.totalDebit,
+            localization.balance,
+          ];
+
+          // Prepare report data
+          for (final client in clients) {
+            final sumCredit = client.sumCredit ?? 0.0;
+            final sumDebit = client.sumDebit ?? 0.0;
+            final balance = client.balance;
+
+            tableData.add([
+              client.name ?? client.phoneNumber,
+              sumCredit.toString(),
+              sumDebit.toString(),
+              balance.toString(),
+            ]);
+          }
+          tableFooterData = [
+            'Total',
+            '',
+            '',
+           '',
+          ];
+
+
+          
+          break;
+
+
+
+
+        case 'client':
+          // Check if client is selected
+          if (_selectedClientId == null) {
+            SnackBarUtils.showErrorSnackBar(
+              context,
+              message: 'Please select a client',
+            );
+            return;
+          }
+
+          // Get client details
+          final client = clientRepository.getClientById(_selectedClientId!);
+          if (client == null) {
+            SnackBarUtils.showErrorSnackBar(
+              context,
+              message: 'Client not found',
+            );
+            return;
+          }
+
+          // Get client transactions
+          List<TransactionModel> transactions = DataUtils.getClientTransactions(
+            transactionRepository,
+            client.id,
+            currencyCode: _selectedCurrency,
+            startDate: _startDate,
+            endDate: _endDate,
+          );
+
+          // Sort transactions by date
+          transactions = DataUtils.sortTransactionsByDate(transactions);
+
+          // Set report title and table headers
+          reportTitle =
+              '${localization.clientReport} / ${client.name ?? client.phoneNumber}';
+          tableHeaders = [
+            localization.date,
+            localization.Credit,
+            localization.Debit,
+            localization.currency,
+            localization.notes,
+          ];
+
+          // Prepare report data
+          for (final transaction in transactions) {
+            final creditAmount =
+                transaction.type == AppConstants.transactionTypeCredit
+                    ? transaction.amount.toString()
+                    : ' ';
+            final debitAmount =
+                transaction.type == AppConstants.transactionTypeDebit
+                    ? transaction.amount.toString()
+                    : ' ';
+
+            tableData.add([
+              DataUtils.formatDate(transaction.date),
+              creditAmount,
+              debitAmount,
+              transaction.currency,
+              transaction.notes ?? '',
+            ]);
+            tableFooterData = [
+              _formatDate(DateTime.now()),
+              DataUtils.calculateSumCredit(transactions).toString(),
+              DataUtils.calculateSumDebit(transactions).toString(),
+              DataUtils.calculateBalance(transactions).toString(),
+              _selectedCurrency
+            ];
+          }
+          break;
+
+        case 'SingleTransaction':
+          // Get all transactions with filters
+          List<TransactionModel> transactions = [];
+
+          if (_startDate != null && _endDate != null) {
+            transactions = transactionRepository.getTransactionsByDateRange(
+              _startDate!,
+              _endDate!,
+            );
+          } else {
+            transactions = transactionRepository.getAllTransactions();
+          }
+
+          // Sort transactions by date
+          transactions = DataUtils.sortTransactionsByDate(transactions);
+
+          // Set report title and table headers
+          reportTitle = localization.transactionReport;
+          tableHeaders = [
+            localization.date,
+            localization.client,
+            localization.amount,
+            localization.transactionType,
+            localization.currency,
+            localization.notes,
+          ];
+
+          // Prepare report data
+          for (final transaction in transactions) {
+            // Get client name
+            final client = clientRepository.getClientById(transaction.clientId);
+            final clientName =
+                client?.name ?? client?.phoneNumber ?? transaction.clientId;
+
+            tableData.add([
+              DataUtils.formatDate(transaction.date),
+              clientName,
+              transaction.amount.toString(),
+              transaction.type,
+              transaction.currency,
+              transaction.notes ?? '',
+            ]);
+            tableFooterData = [
+              _formatDate(DateTime.now()),
+              DataUtils.calculateSumCredit(transactions).toString(),
+              DataUtils.calculateSumDebit(transactions).toString(),
+              DataUtils.calculateBalance(transactions).toString(),
+              _selectedCurrency,
+              ''
+            ];
+          }
+          break;
+
+        case 'SingleCurrency':
+          // Check if client is selected
+          if (_selectedClientId == null) {
+            // Get all clients with financial data for the selected currency
+            final clients = DataUtils.getAllClientsWithFinancialData(
+              clientRepository,
+              transactionRepository,
+              currencyCode: _selectedCurrency,
+            );
+
+            // Set report title and table headers
+            reportTitle = '${localization.currencyReport}: $_selectedCurrency';
+            tableHeaders = [
+              localization.client,
+              localization.totalCredit,
+              localization.totalDebit,
+              localization.balance,
+            ];
+
+            // Prepare report data
+            for (final client in clients) {
+              final sumCredit = client.sumCredit ?? 0.0;
+              final sumDebit = client.sumDebit ?? 0.0;
+              final balance = sumCredit - sumDebit;
+
+              tableData.add([
+                client.name ?? client.phoneNumber,
+                sumCredit.toString(),
+                sumDebit.toString(),
+                balance.toString(),
+              ]);
+              tableFooterData = [
+                'Total',
+                sumCredit.toString(),
+                sumDebit.toString(),
+                balance.toString(),
+              ];
+            }
+          } else {
+            // Get client details
+            final client = clientRepository.getClientById(_selectedClientId!);
+            if (client == null) {
+              SnackBarUtils.showErrorSnackBar(
+                context,
+                message: 'Client not found',
+              );
+              return;
+            }
+
+            // Get client transactions for the selected currency
+            List<TransactionModel> transactions =
+                DataUtils.getClientTransactions(
+              transactionRepository,
+              client.id,
+              currencyCode: _selectedCurrency,
+              startDate: _startDate,
+              endDate: _endDate,
+            );
+
+            // Sort transactions by date
+            transactions = DataUtils.sortTransactionsByDate(transactions);
+
+            // Set report title and table headers
+            reportTitle =
+                '${localization.currencyReport}: ${client.name ?? client.phoneNumber} - $_selectedCurrency';
+            tableHeaders = [
+              localization.date,
+              localization.Credit,
+              localization.Debit,
+              localization.notes,
+            ];
+
+            // Prepare report data
+            for (final transaction in transactions) {
+              final creditAmount =
+                  transaction.type == AppConstants.transactionTypeCredit
+                      ? transaction.amount.toString()
+                      : '0';
+              final debitAmount =
+                  transaction.type == AppConstants.transactionTypeDebit
+                      ? transaction.amount.toString()
+                      : '0';
+
+              tableData.add([
+                DataUtils.formatDate(transaction.date),
+                creditAmount,
+                debitAmount,
+                transaction.notes ?? '',
+              ]);
+              tableFooterData = [
+                'Total',
+                DataUtils.calculateSumCredit(transactions).toString(),
+                DataUtils.calculateSumDebit(transactions).toString(),
+                DataUtils.calculateBalance(transactions).toString(),
+              ];
+            }
+          }
+          break;
+
+        default: // 'all' or any other type
+          // Get all clients with financial data for the selected currency
+          final clients = DataUtils.getAllClientsWithFinancialData(
+            clientRepository,
+            transactionRepository,
+            currencyCode: _selectedCurrency,
+          );
+
+          // Set report title and table headers
+          reportTitle = 'All Clients';
+          tableHeaders = [
+            localization.client,
+            localization.Credit,
+            localization.Debit,
+            localization.currency,
+            localization.balance,
+          ];
+
+          // Prepare report data
+          for (final client in clients) {
+            final sumCredit = client.sumCredit ?? 0.0;
+            final sumDebit = client.sumDebit ?? 0.0;
+            final balance = sumCredit - sumDebit;
+
+            tableData.add([
+              client.name ?? client.phoneNumber,
+              sumCredit.toString(),
+              sumDebit.toString(),
+              _selectedCurrency,
+              balance.toString(),
+            ]);
+          }
+         
+          break;
+      }
+
+      // Navigate to report preview
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => ReportPreview(
+            reportTitle: reportTitle,
+            tableHeaderTitles: tableHeaders,
+            tableData: tableData,
+            tableFooterData: tableFooterData,
+            fromDate: _startDate != null ? _formatDate(_startDate!) : 'All',
+            toDate: _endDate != null ? _formatDate(_endDate!) : 'All',
+          ),
+        ),
+      );
+    } catch (e) {
+      SnackBarUtils.showErrorSnackBar(
+        context,
+        message: 'Error generating report: $e',
+      );
+    }
   }
 }

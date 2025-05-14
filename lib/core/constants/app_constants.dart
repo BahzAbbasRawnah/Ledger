@@ -2,7 +2,8 @@ class AppConstants {
   // App Information
   static const String appName = 'Ledger';
   static const String appVersion = '1.0.0';
-  
+  static const String appLogo = 'assets/images/logo.png';
+
   // Shared Preferences Keys
   static const String prefLanguageCode = 'language_code';
   static const String prefThemeMode = 'theme_mode';
@@ -13,37 +14,36 @@ class AppConstants {
   static const String prefIsPremium = 'is_premium';
   static const String prefBusinessName = 'business_name';
   static const String prefBusinessPhone = 'business_phone';
+  static const String prefBusinessLocation = 'business_location';
   static const String prefBusinessLogo = 'business_logo';
-  
+
   // Hive Box Names
   static const String userBox = 'user_box';
   static const String clientsBox = 'clients_box';
   static const String transactionsBox = 'transactions_box';
   static const String settingsBox = 'settings_box';
-  
+
   // Trial Period in Days
   static const int trialPeriodDays = 30;
-  
+
   // Supported Languages
   static const List<Map<String, dynamic>> supportedLanguages = [
     {'code': 'en', 'name': 'English'},
     {'code': 'ar', 'name': 'العربية'},
   ];
-  
+
   // Supported Currencies
   static const List<Map<String, dynamic>> supportedCurrencies = [
-    {'code': 'USD', 'symbol': '\$', 'name': 'US Dollar'},
-    {'code': 'EUR', 'symbol': '€', 'name': 'Euro'},
-    {'code': 'GBP', 'symbol': '£', 'name': 'British Pound'},
+    {'code': 'YER', 'symbol': '﷼', 'name': 'Yemeni Rial'},
     {'code': 'SAR', 'symbol': '﷼', 'name': 'Saudi Riyal'},
-    {'code': 'AED', 'symbol': 'د.إ', 'name': 'UAE Dirham'},
-    {'code': 'EGP', 'symbol': 'ج.م', 'name': 'Egyptian Pound'},
+    {'code': 'USD', 'symbol': '\$', 'name': 'US Dollar'},
+
   ];
-  
+
   // Transaction Types
-  static const String transactionTypeIncoming = 'incoming';
-  static const String transactionTypeOutgoing = 'outgoing';
-  
+  static const String transactionTypeCredit = 'Credit';
+  static const String transactionTypeDebit = 'Debit';
+
   // Routes
   static const String routeSplash = '/';
   static const String routeOnboarding = '/onboarding';

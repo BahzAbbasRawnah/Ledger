@@ -57,10 +57,10 @@ class MyApp extends StatelessWidget {
     // Initialize repositories
     final userRepository =
         UserRepository(Hive.box<UserModel>(AppConstants.userBox));
-    final clientRepository =
-        ClientRepository(Hive.box<ClientModel>(AppConstants.clientsBox));
     final transactionRepository = TransactionRepository(
         Hive.box<TransactionModel>(AppConstants.transactionsBox));
+    final clientRepository = ClientRepository(
+        Hive.box<ClientModel>(AppConstants.clientsBox), transactionRepository);
 
     return MultiBlocProvider(
       providers: [

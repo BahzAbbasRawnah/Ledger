@@ -203,12 +203,11 @@ class _TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
                       child: CircleAvatar(
                         radius: 40,
                         backgroundColor: transaction.type ==
-                                AppConstants.transactionTypeIncoming
+                                AppConstants.transactionTypeCredit
                             ? AppTheme.successColor
                             : AppTheme.errorColor,
                         child: Icon(
-                          transaction.type ==
-                                  AppConstants.transactionTypeIncoming
+                          transaction.type == AppConstants.transactionTypeCredit
                               ? Icons.arrow_downward
                               : Icons.arrow_upward,
                           size: 40,
@@ -226,7 +225,7 @@ class _TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
                           fontSize: 28,
                           fontWeight: FontWeight.bold,
                           color: transaction.type ==
-                                  AppConstants.transactionTypeIncoming
+                                  AppConstants.transactionTypeCredit
                               ? AppTheme.successColor
                               : AppTheme.errorColor,
                         ),
@@ -246,13 +245,13 @@ class _TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
                       context,
                       Icons.swap_horiz,
                       localizations.transactionType,
-                      transaction.type == AppConstants.transactionTypeIncoming
-                          ? localizations.incoming
-                          : localizations.outgoing,
-                      valueColor: transaction.type ==
-                              AppConstants.transactionTypeIncoming
-                          ? AppTheme.successColor
-                          : AppTheme.errorColor,
+                      transaction.type == AppConstants.transactionTypeCredit
+                          ? localizations.Credit
+                          : localizations.Debit,
+                      valueColor:
+                          transaction.type == AppConstants.transactionTypeCredit
+                              ? AppTheme.successColor
+                              : AppTheme.errorColor,
                     ),
 
                     _buildDetailItem(

@@ -9,17 +9,26 @@ abstract class ClientEvent extends Equatable {
   List<Object?> get props => [];
 }
 
-class ClientLoadAllEvent extends ClientEvent {}
+class ClientLoadAllEvent extends ClientEvent {
+  final String? currencyCode;
+
+  const ClientLoadAllEvent({this.currencyCode});
+
+  @override
+  List<Object?> get props => [currencyCode];
+}
 
 class ClientSearchEvent extends ClientEvent {
   final String query;
+  final String? currencyCode;
 
   const ClientSearchEvent({
     required this.query,
+    this.currencyCode,
   });
 
   @override
-  List<Object?> get props => [query];
+  List<Object?> get props => [query, currencyCode];
 }
 
 class ClientAddEvent extends ClientEvent {
@@ -63,13 +72,15 @@ class ClientDeleteEvent extends ClientEvent {
 
 class ClientLoadDetailsEvent extends ClientEvent {
   final String id;
+  final String? currencyCode;
 
   const ClientLoadDetailsEvent({
     required this.id,
+    this.currencyCode,
   });
 
   @override
-  List<Object?> get props => [id];
+  List<Object?> get props => [id, currencyCode];
 }
 
 class ClientVerifyCredentialsEvent extends ClientEvent {
